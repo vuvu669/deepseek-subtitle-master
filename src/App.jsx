@@ -40,12 +40,12 @@ export default function App() {
   // File & Subtitle States
   const [fileContent, setFileContent] = useState('');
   const [fileName, setFileName] = useState('');
-  const [fileType, setFileType] = useState('srt'); // srt | vtt | txt
+  const [fileType, setFileType] = useState('srt');
   const [parsedBlocks, setParsedBlocks] = useState([]);
   const [parts, setParts] = useState([]);
   
   // App UI & Translation States
-  const [activeTab, setActiveTab] = useState('translator'); // translator | guide
+  const [activeTab, setActiveTab] = useState('translator');
   const [isTranslating, setIsTranslating] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [currentTranslatingPart, setCurrentTranslatingPart] = useState(null);
@@ -55,12 +55,10 @@ export default function App() {
   const pauseRef = useRef(false);
   const cancelRef = useRef(false);
 
-  // Save API Key
   useEffect(() => {
     localStorage.setItem('deepseek_key', apiKey);
   }, [apiKey]);
 
-  // Handle File Upload
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -78,7 +76,6 @@ export default function App() {
     reader.readAsText(file);
   };
 
-  // Parse SRT/VTT/TXT into blocks
   const parseSubtitle = (text) => {
     const lines = text.split(/\r?\n/);
     const blocks = [];
@@ -112,7 +109,6 @@ export default function App() {
     sliceIntoParts(blocks, linesPerPart);
   };
 
-  // Divide into Parts
   const sliceIntoParts = (blocks, chunkSize) => {
     const totalParts = Math.ceil(blocks.length / chunkSize);
     const newParts = [];
@@ -125,14 +121,13 @@ export default function App() {
         endIndex: Math.min((i + 1) * chunkSize, blocks.length),
         blocks: partBlocks,
         translatedBlocks: [],
-        status: 'idle', // idle | translating | completed | error
+        status: 'idle',
         error: null
       });
     }
     setParts(newParts);
   };
 
-  // Re-slice when chunk size changes
   const handleChunkSizeChange = (newSize) => {
     setLinesPerPart(newSize);
     if (parsedBlocks.length > 0) {
@@ -140,7 +135,6 @@ export default function App() {
     }
   };
 
-  // Call DeepSeek API for a specific Part
   const translateSinglePart = async (partToTranslate, customPrompt = systemPrompt) => {
     if (!apiKey) {
       alert("Vui lòng nhập DeepSeek API Key!");
@@ -192,7 +186,7 @@ export default function App() {
 
         return {
           ...orig,
-          translatedText: transText || '[Dịch lỗi / Khống tìm thấy]'
+          translatedText: transText || '[Dịch lỗi / Không tìm thấy]'
         };
       });
 
@@ -203,7 +197,6 @@ export default function App() {
     }
   };
 
-  // Translate Single Part Trigger
   const handleTranslatePart = async (partId) => {
     const partIdx = parts.findIndex(p => p.id === partId);
     if (partIdx === -1) return;
@@ -226,7 +219,6 @@ export default function App() {
     }
   };
 
-  // Translate All Parts Sequentially
   const startTranslateAll = async () => {
     if (!apiKey) {
       alert("Vui lòng nhập DeepSeek API Key trước khi dịch!");
@@ -271,7 +263,6 @@ export default function App() {
     setIsTranslating(false);
     setCurrentTranslatingPart(null);
 
-    // Auto Download combined file if option enabled
     const allDone = currentPartsState.every(p => p.status === 'completed');
     if (allDone && autoDownload) {
       downloadCombinedFile(currentPartsState);
@@ -289,7 +280,6 @@ export default function App() {
     setIsPaused(false);
   };
 
-  // Helper to Format Output File Content
   const generateOutputText = (partsList) => {
     const allTranslated = partsList.flatMap(p => p.translatedBlocks);
     if (allTranslated.length === 0) return '';
@@ -305,7 +295,6 @@ export default function App() {
     }).join('\n\n');
   };
 
-  // Auto/Manual Download Combined Subtitle File
   const downloadCombinedFile = (partsToCombine = parts) => {
     const textContent = generateOutputText(partsToCombine);
     if (!textContent) {
@@ -332,7 +321,6 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
-  // Download individual Part
   const downloadSinglePart = (part) => {
     if (part.translatedBlocks.length === 0) return;
     const textContent = part.translatedBlocks.map((b, idx) => {
@@ -353,7 +341,6 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
-  // Copy Full Translated Text
   const handleCopy = () => {
     const text = generateOutputText(parts);
     if (!text) return;
@@ -367,7 +354,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      {/* Header */}
       <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -408,14 +394,9 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Container */}
       {activeTab === 'translator' ? (
         <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
-          {/* Left Column: Config & Control Panel (4 Cols) */}
           <div className="lg:col-span-4 space-y-6">
-            
-            {/* API & Model Config */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
               <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
                 <Settings className="w-5 h-5 text-indigo-400" />
@@ -462,7 +443,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Chunk Size / Parts config */}
               <div>
                 <label className="block text-xs font-medium text-slate-400 mb-1">
                   Chia Part Phụ Đề (Mặc định 200 dòng/part)
@@ -479,7 +459,6 @@ export default function App() {
                 </select>
               </div>
 
-              {/* Auto download toggle */}
               <div className="flex items-center justify-between bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
                 <span className="text-xs text-slate-300">Auto Download sau khi hoàn thành</span>
                 <input
@@ -491,7 +470,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* System Prompt Customization */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-3">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center space-x-2">
@@ -530,7 +508,6 @@ export default function App() {
               ></textarea>
             </div>
 
-            {/* Upload File Box */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl text-center">
               <label className="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition bg-slate-950/40">
                 <Upload className="w-8 h-8 text-indigo-400 mb-2" />
@@ -556,13 +533,9 @@ export default function App() {
                 </div>
               )}
             </div>
-
           </div>
 
-          {/* Right Column: Execution & Preview Panel (8 Cols) */}
           <div className="lg:col-span-8 space-y-6">
-            
-            {/* Status & Execution Control */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -604,7 +577,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Progress Bar */}
               {parts.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs text-slate-400">
@@ -620,7 +592,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* Parts Grid Status */}
               {parts.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
                   {parts.map((p) => (
@@ -669,7 +640,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* Global Output Actions */}
               {completedCount > 0 && (
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800">
                   <div className="flex items-center space-x-2">
@@ -705,7 +675,6 @@ export default function App() {
               )}
             </div>
 
-            {/* Side-by-Side Comparison Preview */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
               <h3 className="font-semibold text-slate-200 flex items-center text-sm">
                 <Subtitles className="w-4 h-4 text-cyan-400 mr-2" />
@@ -729,7 +698,6 @@ export default function App() {
                           const translatedBlock = part.translatedBlocks[idx];
                           return (
                             <div key={idx} className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60 text-xs">
-                              {/* Original */}
                               <div className="space-y-1">
                                 <div className="text-[10px] font-mono text-slate-500 flex justify-between">
                                   <span>#{block.id || idx + 1}</span>
@@ -737,13 +705,12 @@ export default function App() {
                                 </div>
                                 <div className="text-slate-300 whitespace-pre-wrap">{block.text}</div>
                               </div>
-                              {/* Translated */}
                               <div className="space-y-1 md:border-l md:border-slate-800/80 md:pl-3">
                                 <div className="text-[10px] font-mono text-indigo-400">
-                                  {translatedBlock ? 'Tiếng Việt (Đã dịch)' : 'Chờ dịch...'}
+                                  Bản dịch tiếng Việt
                                 </div>
-                                <div className="text-emerald-300 font-medium whitespace-pre-wrap">
-                                  {translatedBlock ? translatedBlock.translatedText : '---'}
+                                <div className="text-indigo-200 whitespace-pre-wrap font-medium">
+                                  {translatedBlock ? translatedBlock.translatedText : <span className="text-slate-600 italic">Chờ dịch...</span>}
                                 </div>
                               </div>
                             </div>
@@ -754,70 +721,25 @@ export default function App() {
                 )}
               </div>
             </div>
-
           </div>
         </main>
       ) : (
-        /* Guide Tab for Vercel Deployment */
         <main className="flex-1 max-w-4xl w-full mx-auto p-6 space-y-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-            <div>
-              <h2 className="text-xl font-bold text-slate-100 flex items-center">
-                <ExternalLink className="w-5 h-5 text-indigo-400 mr-2" />
-                Hướng Dẫn Đưa Trang Web Lên Vercel.app Bản Chuẩn
-              </h2>
-              <p className="text-xs text-slate-400 mt-1">
-                Làm theo các bước đơn giản dưới đây để sở hữu tên miền <code className="text-indigo-300 font-mono">your-app.vercel.app</code> hoàn toàn miễn phí.
-              </p>
-            </div>
-
-            <div className="space-y-4 text-xs text-slate-300">
-              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
-                <h3 className="font-semibold text-indigo-400">Bước 1: Tạo dự án React Vite local</h3>
-                <pre className="bg-slate-900 p-3 rounded-lg font-mono text-slate-200 overflow-x-auto">
-{`npm create vite@latest deepseek-sub-master -- --template react
-cd deepseek-sub-master
-npm install
-npm install lucide-react tailwindcss autoprefixer postcss
-npx tailwindcss init -p`}
-                </pre>
-              </div>
-
-              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
-                <h3 className="font-semibold text-indigo-400">Bước 2: Thay mã nguồn App.jsx</h3>
-                <p className="text-slate-400">Dán toàn bộ mã nguồn của file `App.jsx` hiện tại vào đường dẫn `src/App.jsx` trong thư mục dự án của bạn.</p>
-              </div>
-
-              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
-                <h3 className="font-semibold text-indigo-400">Bước 3: Push dự án lên GitHub</h3>
-                <pre className="bg-slate-900 p-3 rounded-lg font-mono text-slate-200 overflow-x-auto">
-{`git init
-git add .
-git commit -m "Initial commit DeepSeek Subtitle Master"
-git branch -M main
-git remote add origin https://github.com/<tên-username-github>/deepseek-sub-master.git
-git push -u origin main`}
-                </pre>
-              </div>
-
-              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
-                <h3 className="font-semibold text-indigo-400">Bước 4: Connect Vercel và Deploy</h3>
-                <ol className="list-decimal list-inside space-y-1 text-slate-400">
-                  <li>Truy cập <a href="https://vercel.com" target="_blank" rel="noreferrer" className="text-indigo-400 underline">Vercel.com</a> và đăng nhập tài khoản GitHub.</li>
-                  <li>Nhấn nút <strong>Add New... $ightarrow$ Project</strong>.</li>
-                  <li>Chọn repository <code className="text-slate-200 font-mono">deepseek-sub-master</code> và bấm <strong>Import</strong>.</li>
-                  <li>Nhấn <strong>Deploy</strong>. Vercel sẽ tự động build trang web của bạn sau 1 phút!</li>
-                </ol>
-              </div>
-            </div>
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+            <h2 className="text-xl font-bold text-indigo-400">Hướng Dẫn Deploy Dự Án Lên Vercel</h2>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              Dự án <strong>DeepSeek Subtitle Master</strong> được cấu hình chuẩn với Vite + React, hỗ trợ chạy mượt mà trên Vercel.
+            </p>
+            <ol className="list-decimal list-inside space-y-2 text-sm text-slate-300">
+              <li>Đẩy toàn bộ mã nguồn lên kho lưu trữ GitHub cá nhân của bạn.</li>
+              <li>Truy cập <a href="https://vercel.com" target="_blank" rel="noreferrer" className="text-indigo-400 underline">Vercel Dashboard</a>, bấm <strong>Add New &rarr; Project</strong>.</li>
+              <li>Chọn repository GitHub tương ứng và nhấn <strong>Import</strong>.</li>
+              <li>Tại mục <strong>Application Preset</strong>, chọn framework là <strong>Vite</strong>[cite: 3].</li>
+              <li>Bấm nút <strong>Deploy</strong> để hoàn tất[cite: 3].</li>
+            </ol>
           </div>
         </main>
       )}
-
-      {/* Footer */}
-      <footer className="border-t border-slate-800 py-4 text-center text-xs text-slate-500">
-        DeepSeek Subtitle Master &copy; 2026 | Tự động thêm hậu tố <code className="text-indigo-400 font-mono">_TV-Sub.vi</code> khi xuất file
-      </footer>
     </div>
   );
 }
